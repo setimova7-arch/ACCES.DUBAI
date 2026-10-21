@@ -1,0 +1,260 @@
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<title>ACCESS DUBAI — доступная карта</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--ink:#17212b;--muted:#64727d;--line:#e2e8eb;--teal:#087f8c;--pale:#e8f7f7;--surface:#fff;--shadow:0 8px 28px #14222c1c}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}body{overflow:hidden;background:#f3f7f8}
+button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation}
+#map{position:absolute;inset:0;z-index:0;background:#e8eeee}
+.topbar{position:absolute;z-index:500;top:12px;left:12px;right:12px;display:flex;gap:8px;align-items:center}
+.brand{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:9px;min-width:max-content}
+.logo{width:34px;height:34px;border-radius:11px;background:var(--pale);display:grid;place-items:center;font-size:20px}
+.brand strong{display:block;font-size:14px;letter-spacing:.3px}.brand small{display:block;color:var(--muted);font-size:11px}
+.searchbox{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);display:flex;align-items:center;padding:0 12px;gap:8px;height:56px}
+.searchbox span{font-size:20px}.searchbox input{border:0;outline:0;width:100%;min-width:0;background:transparent;color:var(--ink)}
+.iconbtn{border:1px solid var(--line);background:#fff;border-radius:15px;width:54px;height:56px;box-shadow:var(--shadow);font-size:21px;color:var(--ink);flex-shrink:0}
+.map-controls{position:absolute;right:12px;top:84px;z-index:450;display:flex;flex-direction:column;gap:8px}
+.map-controls button{width:46px;height:46px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow);font-size:20px}
+.bottomsheet{position:absolute;z-index:500;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:0 -8px 30px #14222c1a;padding:10px 16px calc(14px + env(safe-area-inset-bottom));max-height:61%;overflow-y:auto}
+.handle{width:38px;height:4px;border-radius:10px;background:#cbd5d9;margin:0 auto 12px}
+h1{font-size:20px;line-height:1.2;margin:0 0 5px} .sub{font-size:13px;color:var(--muted);margin:0 0 13px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tile{border:1px solid var(--line);border-radius:15px;background:#fff;padding:11px 7px;text-align:center;min-height:74px;color:var(--ink)}
+.tile .emoji{font-size:23px;display:block;margin-bottom:4px}.tile span:last-child{font-size:12px;font-weight:650}
+.tile.active{border-color:var(--teal);background:var(--pale)}
+.sectiontitle{font-size:14px;font-weight:750;margin:10px 0 8px}
+.routefields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.field input,.field select{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 10px;background:#fff;color:var(--ink);outline-color:var(--teal)}
+.primary{width:100%;border:0;background:var(--teal);color:#fff;border-radius:13px;padding:13px;font-weight:750;margin-top:9px;min-height:48px}
+.secondary{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px;font-weight:650;min-height:43px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.status{margin-top:10px;background:#f4f7f8;border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.45;color:#4e5d67}
+.status strong{color:var(--ink)}.badge{display:inline-block;padding:3px 7px;border-radius:7px;background:#fff0d8;color:#76500a;font-weight:700;margin-bottom:5px}
+.poi-list{display:grid;gap:7px;margin-top:8px}.poi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;background:#fff;display:flex;align-items:center;gap:10px;color:var(--ink)}.poi b{display:block;font-size:13px}.poi small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.footer{font-size:11px;color:var(--muted);line-height:1.4;margin-top:10px}
+.modal{position:absolute;inset:0;z-index:1000;background:#14222c70;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}
+.dialog{width:100%;max-width:520px;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-height:86%;overflow:auto}
+.dialog h2{font-size:21px;margin:0 0 7px}.dialog p{font-size:13px;color:var(--muted);line-height:1.5}
+.pref{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}.pref input{width:21px;height:21px;accent-color:var(--teal)}
+body.large-text{font-size:19px}body.large-text .tile span:last-child,body.large-text .field label,body.large-text .sub{font-size:15px}body.high-contrast{--ink:#000;--muted:#27313a;--line:#5b6670;--teal:#00545e;--pale:#d5ffff}
+.leaflet-control-attribution{font-size:9px!important}
+@media(min-width:760px){.topbar{right:auto;width:620px}.bottomsheet{left:14px;right:auto;bottom:14px;width:390px;border-radius:22px;max-height:calc(100% - 100px)}.map-controls{right:18px;top:90px}.handle{display:none}}
+@media(max-width:390px){.brand{padding:8px}.brand small{display:none}.brand strong{font-size:12px}.logo{width:30px;height:30px}.topbar{gap:6px;left:8px;right:8px;top:8px}.searchbox{height:50px;padding:0 8px}.iconbtn{height:50px;width:44px}.map-controls{top:70px;right:8px}.bottomsheet{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<div id="map" aria-label="Интерактивная карта Дубая"></div>
+<div class="topbar">
+  <div class="brand"><div class="logo" aria-hidden="true">♿</div><div><strong>ACCESS DUBAI</strong><small>Доступный город</small></div></div>
+  <form class="searchbox" id="searchForm" role="search"><span aria-hidden="true">⌕</span><input id="searchInput" aria-label="Поиск места" placeholder="Найти место в Дубае" autocomplete="off"><button type="submit" style="display:none">Найти</button></form>
+  <select id="languageSelect" aria-label="Language" title="Language" style="height:50px;max-width:86px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow);padding:0 5px"><option value="ru">RU</option><option value="en">EN</option><option value="ar">عربي</option></select><button class="iconbtn" id="settingsBtn" aria-label="Настройки доступности" title="Настройки">⚙</button>
+</div>
+<div class="map-controls">
+  <button id="locateBtn" aria-label="Моё местоположение" title="Моё местоположение">◎</button>
+  <button id="zoomIn" aria-label="Приблизить карту" title="Приблизить">＋</button>
+  <button id="zoomOut" aria-label="Отдалить карту" title="Отдалить">−</button>
+</div>
+<section class="bottomsheet" aria-label="Панель маршрутов">
+  <div class="handle"></div>
+  <h1 data-i18n="heading">Куда направимся?</h1>
+  <p class="sub" data-i18n="subheading">Маршруты с учётом ваших потребностей</p>
+  <div class="quick">
+    <button class="tile" id="wheelchairBtn" aria-pressed="false"><span class="emoji">♿</span><span data-i18n="noStairs">Без лестниц</span></button>
+    <button class="tile" id="coolBtn" aria-pressed="false"><span class="emoji">☀️</span><span data-i18n="lessHeat">Меньше жары</span></button>
+    <button class="tile" id="nearbyBtn"><span class="emoji">📍</span><span data-i18n="nearby">Места рядом</span></button>
+  </div>
+  <div class="sectiontitle" data-i18n="buildRoute">Построить маршрут</div>
+  <div class="routefields">
+    <div class="field"><label for="fromInput" data-i18n="from">Откуда</label><input id="fromInput" placeholder="Введите место отправления" autocomplete="off"></div>
+    <div class="field"><label for="toInput" data-i18n="to">Куда</label><input id="toInput" placeholder="Например, Museum of the Future" autocomplete="off"></div>
+  </div>
+  <div class="field" style="margin-top:9px"><label for="travelMode" data-i18n="travelMode">Способ передвижения</label><select id="travelMode"><option value="foot" data-i18n="walking">🚶 Пешком</option><option value="car" data-i18n="driving">🚗 На автомобиле</option></select></div><button class="secondary" id="useLocationBtn" style="width:100%;margin-top:8px" data-i18n="useLocation">◎ Использовать моё местоположение</button><button class="primary" id="routeBtn" data-i18n="findRoute">Найти маршрут</button>
+  <div class="row" style="margin-top:8px"><button class="secondary" id="placesBtn" data-i18n="accessiblePlaces">Доступные места</button><button class="secondary" id="speakBtn" data-i18n="readScreen">🔊 Прочитать экран</button></div>
+  <div class="status" id="statusBox" role="status" aria-live="polite"><span class="badge">Важно</span><br>Маршрут пока не проверен на доступность. Данные о пандусах, лифтах и тени могут быть неполными.</div>
+  <div id="placesPanel" hidden><div class="sectiontitle">Популярные ориентиры</div><div class="poi-list" id="poiList"></div></div>
+  <p class="footer">Карта: © OpenStreetMap contributors · Данные о доступности требуют проверки. Не используйте прототип как единственный источник навигации.</p>
+</section>
+<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="dialog">
+    <h2 id="settingsTitle" data-i18n="settingsTitle">Настройки доступности</h2>
+    <p data-i18n="settingsInfo">Выберите удобные параметры интерфейса. Они не подтверждают доступность конкретного маршрута.</p>
+    <label class="pref"><input type="checkbox" id="largeText"> <span data-i18n="largeText">Крупный текст</span></label>
+    <label class="pref"><input type="checkbox" id="highContrast"> <span data-i18n="highContrast">Высокий контраст</span></label>
+    <label class="pref"><input type="checkbox" id="voiceHints"> <span data-i18n="voiceHints">Голосовые подсказки</span></label>
+    <label class="pref"><input type="checkbox" id="wheelchairPref"> <span data-i18n="avoidStairs">Избегать лестниц (предпочтение)</span></label>
+    <button class="primary" id="saveSettings" data-i18n="saveSettings">Сохранить настройки</button>
+    <button class="secondary" id="closeSettings" style="width:100%;margin-top:8px" data-i18n="closeSettings">Закрыть</button>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const dubai = [25.2048,55.2708];
+  const map = L.map('map',{zoomControl:false}).setView(dubai,12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+  }).addTo(map);
+  let routeLayer = null, startMarker = null, endMarker = null, userMarker = null, userLocation = null;
+  let avoidStairs = false, coolMode = false;
+  let currentLanguage = 'ru';
+  let currentOriginSelected = false;
+  const translations = {
+    ru:{heading:'Куда направимся?',subheading:'Маршруты с учётом ваших потребностей',noStairs:'Без лестниц',lessHeat:'Меньше жары',nearby:'Места рядом',buildRoute:'Построить маршрут',from:'Откуда',to:'Куда',travelMode:'Способ передвижения',walking:'🚶 Пешком',driving:'🚗 На автомобиле',useLocation:'◎ Использовать моё местоположение',findRoute:'Найти маршрут',accessiblePlaces:'Доступные места',readScreen:'🔊 Прочитать экран',settingsTitle:'Настройки доступности',settingsInfo:'Выберите удобные параметры интерфейса. Они не подтверждают доступность конкретного маршрута.',largeText:'Крупный текст',highContrast:'Высокий контраст',voiceHints:'Голосовые подсказки',avoidStairs:'Избегать лестниц (предпочтение)',saveSettings:'Сохранить настройки',closeSettings:'Закрыть',searchPlaceholder:'Найти место в Дубае',fromPlaceholder:'Введите место отправления',toPlaceholder:'Например, Museum of the Future'},
+    en:{heading:'Where would you like to go?',subheading:'Routes tailored to your needs',noStairs:'Avoid stairs',lessHeat:'Less heat',nearby:'Places nearby',buildRoute:'Plan a route',from:'From',to:'To',travelMode:'Travel mode',walking:'🚶 Walking',driving:'🚗 Driving',useLocation:'◎ Use my current location',findRoute:'Find route',accessiblePlaces:'Accessible places',readScreen:'🔊 Read screen',settingsTitle:'Accessibility settings',settingsInfo:'Choose interface preferences. They do not confirm that a route is accessible.',largeText:'Large text',highContrast:'High contrast',voiceHints:'Voice guidance',avoidStairs:'Prefer routes without stairs',saveSettings:'Save settings',closeSettings:'Close',searchPlaceholder:'Search for a place in Dubai',fromPlaceholder:'Enter starting place',toPlaceholder:'E.g. Museum of the Future'},
+    ar:{heading:'إلى أين تريد الذهاب؟',subheading:'مسارات تراعي احتياجاتك',noStairs:'تجنب السلالم',lessHeat:'حرارة أقل',nearby:'أماكن قريبة',buildRoute:'تخطيط المسار',from:'من',to:'إلى',travelMode:'وسيلة التنقل',walking:'🚶 مشياً',driving:'🚗 بالسيارة',useLocation:'◎ استخدام موقعي الحالي',findRoute:'اعثر على المسار',accessiblePlaces:'أماكن مهيأة',readScreen:'🔊 قراءة الشاشة',settingsTitle:'إعدادات إمكانية الوصول',settingsInfo:'اختر تفضيلات الواجهة. لا تؤكد هذه الخيارات أن المسار مهيأ.',largeText:'نص كبير',highContrast:'تباين عالٍ',voiceHints:'إرشادات صوتية',avoidStairs:'تفضيل مسارات بلا سلالم',saveSettings:'حفظ الإعدادات',closeSettings:'إغلاق',searchPlaceholder:'ابحث عن مكان في دبي',fromPlaceholder:'أدخل نقطة البداية',toPlaceholder:'مثال: متحف المستقبل'}
+  };
+  function applyLanguage(lang){currentLanguage=lang;const tr=translations[lang]||translations.ru;document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(tr[k])el.textContent=tr[k]});$('searchInput').placeholder=tr.searchPlaceholder;$('fromInput').placeholder=tr.fromPlaceholder;$('toInput').placeholder=tr.toPlaceholder;$('settingsBtn').title=tr.settingsTitle;$('settingsBtn').setAttribute('aria-label',tr.settingsTitle);$('locateBtn').title=tr.useLocation;$('locateBtn').setAttribute('aria-label',tr.useLocation);}
+  const places = [
+    {name:'Dubai Mall',detail:'Торговый центр · доступность проверяйте на месте',coords:[25.1985,55.2796]},
+    {name:'Burj Khalifa',detail:'Ориентир · проверьте доступный вход',coords:[25.1972,55.2744]},
+    {name:'Museum of the Future',detail:'Музей · проверьте доступные входы и лифты',coords:[25.2192,55.2820]},
+    {name:'Dubai Frame',detail:'Достопримечательность · уточните доступность',coords:[25.2354,55.3005]},
+    {name:'Dubai Opera',detail:'Культурная площадка · уточните доступность',coords:[25.2365,55.2653]},
+    {name:'Mall of the Emirates',detail:'Торговый центр · проверьте доступность',coords:[25.1181,55.2006]},
+    {name:'Dubai Marina Mall',detail:'Торговый центр · проверьте доступность',coords:[25.0778,55.1408]}
+  ];
+  const markers = [];
+  const setStatus = (html) => { $('statusBox').innerHTML = html; };
+  const safeText = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  places.forEach(p => {
+    const marker = L.marker(p.coords).addTo(map).bindPopup(`<strong>${safeText(p.name)}</strong><br>${safeText(p.detail)}<br><button onclick="window.accessSetDestination('${p.name.replace(/'/g,"\\'")}')">Выбрать пункт назначения</button>`);
+    markers.push({place:p,marker});
+  });
+  function locatePlace(name) {
+    const n=name.trim().toLowerCase();
+    return places.find(p=>p.name.toLowerCase()===n) || places.find(p=>p.name.toLowerCase().includes(n) || n.includes(p.name.toLowerCase()));
+  }
+  window.accessSetDestination = name => { $('toInput').value=name; $('placesPanel').hidden=true; map.closePopup(); };
+  function toggleTile(id,on){$(id).classList.toggle('active',on);$(id).setAttribute('aria-pressed',String(on));}
+  $('wheelchairBtn').addEventListener('click',()=>{avoidStairs=!avoidStairs;toggleTile('wheelchairBtn',avoidStairs);$('wheelchairPref').checked=avoidStairs;setStatus(avoidStairs?'<span class="badge">Предпочтение включено</span><br>Будем учитывать режим «без лестниц» как предпочтение. Реальные безбарьерные данные пока не подключены, поэтому маршрут нельзя считать подтверждённо доступным.':'Режим «без лестниц» выключен. Доступность маршрутов всё равно нужно проверять.');});
+  $('coolBtn').addEventListener('click',()=>{coolMode=!coolMode;toggleTile('coolBtn',coolMode);setStatus(coolMode?'<span class="badge">Демо-режим</span><br>Режим жары включён, но проверенные данные о тени и прохладных помещениях пока не подключены. Приложение не может достоверно выбрать более прохладный путь.':'Режим «меньше жары» выключен.');});
+  $('nearbyBtn').addEventListener('click',()=>{map.setView(userLocation||dubai,14);$('placesPanel').hidden=false;renderPlaces();});
+  $('placesBtn').addEventListener('click',()=>{$('placesPanel').hidden=!$('placesPanel').hidden;if(!$('placesPanel').hidden)renderPlaces();});
+  function renderPlaces(){
+    const origin=userLocation||dubai;
+    $('poiList').innerHTML=places.map((p,i)=>({p,i,d:map.distance(origin,p.coords)})).sort((a,b)=>a.d-b.d).map(({p,d})=>`<button class="poi" onclick="window.accessSetDestination('${p.name.replace(/'/g,"\\'")}');document.getElementById('toInput').value='${p.name.replace(/'/g,"\\'")}';document.getElementById('placesPanel').hidden=true;map.setView([${p.coords}],15)"><span style="font-size:22px">📍</span><span><b>${safeText(p.name)}</b><small>${(d/1000).toFixed(1)} км по прямой · ${safeText(p.detail)}</small></span></button>`).join('');
+  }
+  async function geocode(query){
+    const p=locatePlace(query); if(p) return {name:p.name,coords:p.coords};
+    const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ae&q='+encodeURIComponent(query+', Dubai');
+    const res=await fetch(url,{headers:{'Accept':'application/json'}}); if(!res.ok) throw new Error('Поиск места временно недоступен.');
+    const data=await res.json(); if(!data.length) throw new Error('Место не найдено. Попробуйте ввести название на английском.');
+    return {name:data[0].display_name,coords:[Number(data[0].lat),Number(data[0].lon)]};
+  }
+  function getCurrentPosition(){
+    return new Promise((resolve,reject)=>{
+      if(!navigator.geolocation){reject(new Error('Этот браузер не поддерживает геолокацию.'));return;}
+      navigator.geolocation.getCurrentPosition(
+        pos=>resolve({name:'Моё местоположение',coords:[pos.coords.latitude,pos.coords.longitude]}),
+        ()=>reject(new Error('Не удалось определить местоположение. Разрешите доступ к геолокации и попробуйте снова. На телефоне геолокация обычно работает на HTTPS.')),
+        {enableHighAccuracy:true,timeout:15000,maximumAge:10000}
+      );
+    });
+  }
+  function decodeValhallaPolyline(encoded, precision=6){
+    let index=0,lat=0,lon=0;const coordinates=[];const factor=Math.pow(10,precision);
+    while(index<encoded.length){
+      let result=0,shift=0,b;
+      do{b=encoded.charCodeAt(index++)-63;result|=(b&0x1f)<<shift;shift+=5;}while(b>=0x20&&index<encoded.length);
+      const dlat=(result&1)?~(result>>1):(result>>1);lat+=dlat;
+      result=0;shift=0;
+      do{b=encoded.charCodeAt(index++)-63;result|=(b&0x1f)<<shift;shift+=5;}while(b>=0x20&&index<encoded.length);
+      const dlon=(result&1)?~(result>>1):(result>>1);lon+=dlon;
+      coordinates.push([lat/factor,lon/factor]);
+    }
+    return coordinates;
+  }
+  async function buildRoute(){
+    const from=$('fromInput').value.trim(), to=$('toInput').value.trim();
+    if((!from && !(currentOriginSelected && userLocation))||!to){setStatus('Укажите начальную точку и пункт назначения. Можно ввести название места вручную.');return;}
+    $('routeBtn').disabled=true;$('routeBtn').textContent='Ищем маршрут…';
+    try{
+      setStatus('Определяем начальную точку и строим маршрут…');
+      const a=currentOriginSelected && userLocation
+        ? {name:'Моё местоположение',coords:userLocation}
+        : await geocode(from);
+      userLocation=a.coords;
+      const b=await geocode(to);
+      const mode=$('travelMode').value;
+      let routeCoords, routeDistanceKm, routeDurationSec, routeProvider;
+      if(mode==='foot'){
+        // Valhalla uses OpenStreetMap data. In wheelchair preference mode it applies wheelchair-specific pedestrian defaults and a strong stair penalty.
+        const requestBody={
+          locations:[{lat:a.coords[0],lon:a.coords[1]},{lat:b.coords[0],lon:b.coords[1]}],
+          costing:'pedestrian',
+          costing_options:{pedestrian: avoidStairs
+            ? {type:'wheelchair',step_penalty:3000,use_hills:0.1}
+            : {type:'foot'}},
+          units:'kilometers',language:currentLanguage==='ar'?'ar':(currentLanguage==='en'?'en-US':'ru-RU')
+        };
+        const res=await fetch('https://valhalla1.openstreetmap.de/route',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(requestBody)});
+        if(!res.ok)throw new Error('Сервис пешеходных маршрутов временно недоступен. Попробуйте позже.');
+        const data=await res.json();
+        const trip=data.trip;
+        if(!trip||!trip.legs?.length||!trip.legs[0].shape)throw new Error(trip?.status_message||'Не удалось построить пешеходный маршрут для этих точек.');
+        routeCoords=decodeValhallaPolyline(trip.legs[0].shape,6);
+        routeDistanceKm=trip.summary?.length ?? trip.legs.reduce((sum,leg)=>sum+(leg.summary?.length||0),0);
+        routeDurationSec=trip.summary?.time ?? trip.legs.reduce((sum,leg)=>sum+(leg.summary?.time||0),0);
+        routeProvider='Valhalla';
+      } else {
+        const routeBase='https://routing.openstreetmap.de/routed-car/route/v1/driving/';
+        const url=`${routeBase}${a.coords[1]},${a.coords[0]};${b.coords[1]},${b.coords[0]}?overview=full&geometries=geojson&steps=true`;
+        const res=await fetch(url);if(!res.ok)throw new Error('Сервис маршрутов временно недоступен.');
+        const data=await res.json();if(data.code!=='Ok'||!data.routes?.length)throw new Error('Не удалось построить маршрут для этих точек.');
+        const r=data.routes[0];routeCoords=r.geometry.coordinates.map(([lon,lat])=>[lat,lon]);routeDistanceKm=r.distance/1000;routeDurationSec=r.duration;routeProvider='OSRM';
+      }
+      if(!routeCoords?.length)throw new Error('Сервис не вернул линию маршрута. Попробуйте другие точки.');
+      if(routeLayer)map.removeLayer(routeLayer);
+      if(startMarker)map.removeLayer(startMarker);if(endMarker)map.removeLayer(endMarker);
+      startMarker=L.marker(a.coords).addTo(map).bindPopup('Начало: '+safeText(a.name));
+      endMarker=L.marker(b.coords).addTo(map).bindPopup('Конец: '+safeText(b.name));
+      routeLayer=L.polyline(routeCoords,{color:'#22c55e',weight:7,opacity:.95}).addTo(map);
+      map.fitBounds(routeLayer.getBounds(),{padding:[35,35]});
+      const mins=Math.round(routeDurationSec/60),km=Number(routeDistanceKm).toFixed(1);
+      const routeModeLabel=mode==='foot'?(avoidStairs?'Пешеходный маршрут с настройками для коляски и повышенным штрафом за лестницы':'Пешеходный маршрут'):'Маршрут на автомобиле';
+      const accessibilityNote=mode==='foot'?(avoidStairs
+        ? '<span class="badge" style="margin-top:7px">Доступность не подтверждена</span><br>Включены настройки Valhalla для инвалидной коляски и сильное предпочтение избегать лестниц. Это не жёсткое исключение: если данные неполные или обхода нет, лестницы всё ещё могут попасть в маршрут. Пандусы и лифты специально не проверяются.'
+        : '<span class="badge" style="margin-top:7px">Обычный пешеходный маршрут</span><br>Лестницы могут встречаться на пути. Включите режим «Без лестниц», чтобы маршрутизатор сильнее старался их избегать.')
+        : '<span class="badge" style="margin-top:7px">Доступность не подтверждена</span><br>Автомобильный маршрут не проверяет доступность тротуаров, входов, пандусов или лифтов.';
+      setStatus(`<strong>${safeText(a.name.split(',')[0])} → ${safeText(b.name.split(',')[0])}</strong><br>🟢 ${routeModeLabel} показан зелёной линией.<br>Примерно ${km} км · ${mins} мин по оценке сервиса.<br>${accessibilityNote}<br><small>Маршрутизатор: ${routeProvider}. Данные карты могут быть неполными; проверьте маршрут на месте.</small>`);
+    }catch(e){setStatus('<strong>Не получилось построить маршрут.</strong><br>'+safeText(e.message||'Проверьте подключение к интернету и повторите попытку.'));}
+    finally{$('routeBtn').disabled=false;$('routeBtn').textContent='Найти маршрут';}
+  }
+  $('routeBtn').addEventListener('click',buildRoute);
+  $('searchForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('searchInput').value.trim();if(!q)return;setStatus('Ищем место…');try{const p=await geocode(q);map.setView(p.coords,16);L.popup().setLatLng(p.coords).setContent('<strong>'+safeText(p.name.split(',')[0])+'</strong><br>Проверьте доступность места самостоятельно.').openOn(map);$('toInput').value=p.name.split(',')[0];setStatus('Место найдено на карте. Чтобы построить маршрут, укажите начальную точку и нажмите «Найти маршрут». Доступность не подтверждена.');}catch(err){setStatus(safeText(err.message));}});
+  async function useCurrentLocation(){
+    setStatus('Запрашиваем разрешение на местоположение…');
+    try{const p=await getCurrentPosition();userLocation=p.coords;map.setView(userLocation,16);if(userMarker)map.removeLayer(userMarker);userMarker=L.circleMarker(userLocation,{radius:9,color:'#fff',weight:3,fillColor:'#22c55e',fillOpacity:1}).addTo(map).bindPopup('Ваше местоположение');$('fromInput').value='Моё местоположение';currentOriginSelected=true;setStatus('Местоположение определено. Укажите пункт назначения и нажмите «Найти маршрут».');}
+    catch(err){setStatus(safeText(err.message||'Не удалось получить местоположение.'));}
+  }
+  $('locateBtn').addEventListener('click',useCurrentLocation);
+  $('useLocationBtn').addEventListener('click',useCurrentLocation);
+  $('languageSelect').addEventListener('change',e=>applyLanguage(e.target.value));
+  applyLanguage('ru');
+  $('zoomIn').addEventListener('click',()=>map.zoomIn());$('zoomOut').addEventListener('click',()=>map.zoomOut());
+  $('settingsBtn').addEventListener('click',()=>$('settingsModal').classList.add('open'));
+  $('closeSettings').addEventListener('click',()=>$('settingsModal').classList.remove('open'));
+  $('settingsModal').addEventListener('click',e=>{if(e.target===$('settingsModal'))$('settingsModal').classList.remove('open')});
+  $('saveSettings').addEventListener('click',()=>{
+    document.body.classList.toggle('large-text',$('largeText').checked);
+    document.body.classList.toggle('high-contrast',$('highContrast').checked);
+    avoidStairs=$('wheelchairPref').checked;toggleTile('wheelchairBtn',avoidStairs);
+    $('settingsModal').classList.remove('open');
+    if($('voiceHints').checked && 'speechSynthesis' in window) speak('Настройки сохранены. Проверяйте доступность маршрутов перед поездкой.');
+    setStatus('Настройки интерфейса сохранены на время этой сессии. Режим без лестниц — предпочтение, а не гарантия доступности.');
+  });
+  function speak(text){if(!('speechSynthesis' in window)){setStatus('Озвучивание не поддерживается этим браузером.');return;}speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(text));}
+  $('speakBtn').addEventListener('click',()=>speak(document.querySelector('.bottomsheet').innerText));
+  // Пользователь может указать начальную точку вручную; геолокация запрашивается только по кнопке.
+  $('fromInput').addEventListener('input',()=>{currentOriginSelected=false;userLocation=null;});
+  renderPlaces();
+})();
+</script>
+</body>
+</html>
